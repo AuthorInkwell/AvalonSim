@@ -12,6 +12,8 @@ var assign_staff_menu: OptionButton
 var assign_facility_menu: OptionButton
 var status_label: Label
 var event_dialog: AcceptDialog
+var facility_details_dialog: AcceptDialog
+var facility_details_text: RichTextLabel
 
 
 func _ready() -> void:
@@ -96,6 +98,16 @@ func _build_layout() -> void:
 
 	event_dialog = AcceptDialog.new()
 	add_child(event_dialog)
+
+	facility_details_dialog = AcceptDialog.new()
+	facility_details_dialog.title = "Facility Details"
+	add_child(facility_details_dialog)
+
+	facility_details_text = RichTextLabel.new()
+	facility_details_text.custom_minimum_size = Vector2(540, 360)
+	facility_details_text.fit_content = true
+	facility_details_text.scroll_active = true
+	facility_details_dialog.add_child(facility_details_text)
 
 
 func _build_facility_panel() -> PanelContainer:
@@ -230,6 +242,7 @@ func _connect_signals() -> void:
 	StaffManager.staff_changed.connect(_on_state_changed)
 	ReputationManager.reputation_changed.connect(_on_state_changed)
 	EconomyManager.transaction_completed.connect(_on_transaction_completed)
+	facility_list.item_activated.connect(_on_facility_item_activated)
 
 
 func _add_stat(parent: GridContainer, key: String, label_text: String) -> void:
@@ -300,6 +313,7 @@ func _refresh_facilities() -> void:
 	facility_list.clear()
 	for facility in FacilityManager.facilities:
 		var assigned := StaffManager.get_staff_for_facility(int(facility.id)).size()
+		var facility_index := facility_list.get_item_count()
 		facility_list.add_item("%s L%d | %s | cap %d | staff %d/%d | base %d cr" % [
 			facility.name,
 			int(facility.level),
@@ -309,13 +323,16 @@ func _refresh_facilities() -> void:
 			int(facility.staff_required),
 			int(facility.base_income)
 		])
+		facility_list.set_item_metadata(facility_index, {"type": "facility", "id": int(facility.id)})
 
 	for project in FacilityManager.construction_queue:
+		var project_index := facility_list.get_item_count()
 		facility_list.add_item("[Building] %s | %d/%d days remaining" % [
 			project.name,
 			int(project.days_remaining),
 			int(project.total_days)
 		])
+		facility_list.set_item_metadata(project_index, {"type": "construction", "id": int(project.project_id)})
 
 
 func _refresh_staff() -> void:
@@ -422,6 +439,129 @@ func _on_assign_pressed() -> void:
 	var result := EconomyManager.assign_staff(staff_id, facility_id)
 	status_label.text = result.message
 	_refresh()
+
+
+func _on_facility_item_activated(index: int) -> void:
+	if index < 0 or index >= facility_list.get_item_count():
+		return
+
+	var metadata: Variant = facility_list.get_item_metadata(index)
+	if typeof(metadata) != TYPE_DICTIONARY:
+		return
+
+	var row_data: Dictionary = metadata
+	if row_data.get("type", "") == "facility":
+		_show_facility_details(int(row_data.get("id", -1)))
+	elif row_data.get("type", "") == "construction":
+		_show_construction_details(int(row_data.get("id", -1)))
+
+
+func _show_facility_details(facility_id: int) -> void:
+	var facility: Dictionary = FacilityManager.get_facility_by_id(facility_id)
+	if facility.is_empty():
+		status_label.text = "Facility not found."
+		return
+
+	var assigned_staff: Array = StaffManager.get_staff_for_facility(facility_id)
+	var operations: Dictionary = FacilityManager.calculate_daily_operations(GameState.guest_demand)
+	var report: Dictionary = _get_facility_report(operations, facility_id)
+	var revenue := int(report.get("income", 0))
+	var upkeep := int(report.get("upkeep", facility.get("upkeep", 0)))
+	var payroll := _calculate_staff_payroll(assigned_staff)
+	var profit := revenue - upkeep - payroll
+	var required_staff := int(facility.get("staff_required", 0))
+	var assigned_count := assigned_staff.size()
+	var satisfaction := float(report.get("satisfaction", 0.0))
+	var served_guests := int(report.get("served_guests", 0))
+	var staff_note := "Fully staffed"
+	if assigned_count < required_staff:
+		staff_note = "Needs %d more staff" % (required_staff - assigned_count)
+	elif assigned_count > required_staff:
+		staff_note = "%d extra staff assigned" % (assigned_count - required_staff)
+
+	var lines: Array = [
+		"%s" % facility.name,
+		"%s" % facility.get("description", ""),
+		"",
+		"District: %s" % facility.get("district", "Avalon"),
+		"Level: %d" % int(facility.get("level", 1)),
+		"Capacity: %d guests" % int(facility.get("capacity", 0)),
+		"Reputation focus: %s" % _format_focuses(facility.get("reputation_focus", [])),
+		"",
+		"Projected today (demand %d):" % GameState.guest_demand,
+		"Revenue: %+d cr" % revenue,
+		"Upkeep: -%d cr" % upkeep,
+		"Assigned payroll: -%d cr" % payroll,
+		"Profit / Loss: %+d cr" % profit,
+		"Guests served: %d" % served_guests,
+		"Guest satisfaction: %s" % _format_percent(satisfaction),
+		"",
+		"Staffing: %d/%d - %s" % [assigned_count, required_staff, staff_note],
+		"Assigned staff:"
+	]
+
+	if assigned_staff.is_empty():
+		lines.append("- No staff assigned.")
+	else:
+		for staff in assigned_staff:
+			lines.append("- %s, %s | salary %d cr | eff %s | cha %s | rel %s | stress %s" % [
+				staff.name,
+				staff.role,
+				int(staff.salary),
+				_format_percent(float(staff.efficiency)),
+				_format_percent(float(staff.charisma)),
+				_format_percent(float(staff.reliability)),
+				_format_percent(float(staff.stress))
+			])
+
+	facility_details_dialog.title = "%s Details" % facility.name
+	facility_details_text.text = "\n".join(lines)
+	facility_details_dialog.popup_centered(Vector2i(620, 480))
+
+
+func _show_construction_details(project_id: int) -> void:
+	for project in FacilityManager.construction_queue:
+		if int(project.project_id) == project_id:
+			facility_details_dialog.title = "%s Construction" % project.name
+			facility_details_text.text = "%s is under construction.\n\nDays remaining: %d\nTotal build time: %d days\nBuild cost: %d cr" % [
+				project.name,
+				int(project.days_remaining),
+				int(project.total_days),
+				int(project.build_cost)
+			]
+			facility_details_dialog.popup_centered(Vector2i(460, 260))
+			return
+
+	status_label.text = "Construction project not found."
+
+
+func _get_facility_report(operations: Dictionary, facility_id: int) -> Dictionary:
+	for report_data in operations.get("reports", []):
+		var report: Dictionary = report_data
+		if int(report.facility_id) == facility_id:
+			return report
+	return {}
+
+
+func _calculate_staff_payroll(staff_members: Array) -> int:
+	var payroll := 0
+	for staff in staff_members:
+		payroll += int(staff.get("salary", 0))
+	return payroll
+
+
+func _format_focuses(focus_values: Array) -> String:
+	if focus_values.is_empty():
+		return "None"
+
+	var labels: Array = []
+	for focus in focus_values:
+		labels.append(String(focus).capitalize())
+	return ", ".join(labels)
+
+
+func _format_percent(value: float) -> String:
+	return "%.0f%%" % (value * 100.0)
 
 
 func _on_day_advanced(summary: Dictionary) -> void:
