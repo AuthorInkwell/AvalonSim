@@ -1,0 +1,73 @@
+[
+  {
+    "id": "celebrity_check_in",
+    "title": "Celebrity Check-In",
+    "description": "A discreet celebrity entourage praises the island's style and spends aggressively.",
+    "weight": 3,
+    "effects": {
+      "revenue_delta": 900,
+      "expense_delta": 120,
+      "reputation": {
+        "luxury": 2,
+        "decadence": 1,
+        "secrecy": 1
+      }
+    }
+  },
+  {
+    "id": "vip_privacy_scare",
+    "title": "VIP Privacy Scare",
+    "description": "A guest's assistant mistakes a decorative drone for paparazzi. Security smooths things over, mostly.",
+    "weight": 2,
+    "effects": {
+      "revenue_delta": 0,
+      "expense_delta": 350,
+      "reputation": {
+        "secrecy": -2,
+        "safety": 1
+      },
+      "staff_stress_delta": 0.04
+    }
+  },
+  {
+    "id": "mixology_trend",
+    "title": "Mixology Trend",
+    "description": "A luminous cocktail goes viral among guests who insist they discovered it first.",
+    "weight": 3,
+    "effects": {
+      "revenue_delta": 500,
+      "expense_delta": 80,
+      "reputation": {
+        "hospitality": 1,
+        "decadence": 2
+      }
+    }
+  },
+  {
+    "id": "maintenance_overrun",
+    "title": "Maintenance Overrun",
+    "description": "Salt air and neon do not negotiate. Facilities need extra servicing.",
+    "weight": 2,
+    "effects": {
+      "revenue_delta": -150,
+      "expense_delta": 450,
+      "reputation": {
+        "luxury": -1
+      },
+      "staff_stress_delta": 0.03
+    }
+  },
+  {
+    "id": "research_demo",
+    "title": "Research Demo",
+    "description": "The lab previews a hospitality optimization system that is only slightly unsettling.",
+    "weight": 1,
+    "effects": {
+      "revenue_delta": 250,
+      "expense_delta": 0,
+      "reputation": {
+        "innovation": 3
+      }
+    }
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "tourists",
+    "name": "Tourists",
+    "base_weight": 5,
+    "reputation_preferences": ["hospitality", "luxury"]
+  },
+  {
+    "id": "vips",
+    "name": "VIPs",
+    "base_weight": 3,
+    "reputation_preferences": ["luxury", "secrecy", "safety"]
+  },
+  {
+    "id": "celebrities",
+    "name": "Celebrities",
+    "base_weight": 2,
+    "reputation_preferences": ["decadence", "secrecy", "luxury"]
+  },
+  {
+    "id": "investors",
+    "name": "Investors",
+    "base_weight": 2,
+    "reputation_preferences": ["innovation", "safety"]
+  },
+  {
+    "id": "researchers",
+    "name": "Researchers",
+    "base_weight": 1,
+    "reputation_preferences": ["innovation"]
+  },
+  {
+    "id": "adventure_seekers",
+    "name": "Adventure Seekers",
+    "base_weight": 2,
+    "reputation_preferences": ["decadence", "safety"]
+  },
+  {
+    "id": "roleplay_enthusiasts",
+    "name": "Roleplay Enthusiasts",
+    "base_weight": 2,
+    "reputation_preferences": ["hospitality", "decadence", "secrecy"]
+  }
+]
