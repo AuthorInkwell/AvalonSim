@@ -13,7 +13,6 @@ var assign_facility_menu: OptionButton
 var status_label: Label
 var event_dialog: AcceptDialog
 var facility_details_dialog: AcceptDialog
-var facility_details_text: RichTextLabel
 
 
 func _ready() -> void:
@@ -102,12 +101,6 @@ func _build_layout() -> void:
 	facility_details_dialog = AcceptDialog.new()
 	facility_details_dialog.title = "Facility Details"
 	add_child(facility_details_dialog)
-
-	facility_details_text = RichTextLabel.new()
-	facility_details_text.custom_minimum_size = Vector2(540, 360)
-	facility_details_text.fit_content = true
-	facility_details_text.scroll_active = true
-	facility_details_dialog.add_child(facility_details_text)
 
 
 func _build_facility_panel() -> PanelContainer:
@@ -515,7 +508,7 @@ func _show_facility_details(facility_id: int) -> void:
 			])
 
 	facility_details_dialog.title = "%s Details" % facility.name
-	facility_details_text.text = "\n".join(lines)
+	facility_details_dialog.dialog_text = "\n".join(lines)
 	facility_details_dialog.popup_centered(Vector2i(620, 480))
 
 
@@ -523,7 +516,7 @@ func _show_construction_details(project_id: int) -> void:
 	for project in FacilityManager.construction_queue:
 		if int(project.project_id) == project_id:
 			facility_details_dialog.title = "%s Construction" % project.name
-			facility_details_text.text = "%s is under construction.\n\nDays remaining: %d\nTotal build time: %d days\nBuild cost: %d cr" % [
+			facility_details_dialog.dialog_text = "%s is under construction.\n\nDays remaining: %d\nTotal build time: %d days\nBuild cost: %d cr" % [
 				project.name,
 				int(project.days_remaining),
 				int(project.total_days),
