@@ -91,16 +91,19 @@ func calculate_daily_operations(guest_demand: int) -> Dictionary:
 
 		var avg_efficiency := StaffManager.average_stat(assigned_staff, "efficiency", 0.55)
 		var avg_charisma := StaffManager.average_stat(assigned_staff, "charisma", 0.5)
+		var role_contribution: Dictionary = StaffManager.calculate_facility_contribution(assigned_staff, facility)
 		var level := int(facility.get("level", 1))
 		var level_modifier := 1.0 + float(level - 1) * 0.25
-		var staff_modifier := 0.45 + staff_ratio * 0.4 + avg_efficiency * 0.25
-		var charisma_modifier := 0.9 + avg_charisma * 0.2
+		var staff_modifier := 0.45 + staff_ratio * 0.35 + avg_efficiency * 0.2 + float(role_contribution.revenue_modifier)
+		var charisma_modifier := 0.9 + avg_charisma * 0.15
 		var base_income := float(facility.get("base_income", definition.get("base_income", 0)))
 		var income := int(round(base_income * occupancy * level_modifier * staff_modifier * charisma_modifier))
-		var facility_upkeep := int(facility.get("upkeep", definition.get("upkeep", 0)))
+		var base_upkeep := int(facility.get("upkeep", definition.get("upkeep", 0)))
+		var facility_upkeep := int(round(float(base_upkeep) * (1.0 - float(role_contribution.upkeep_reduction))))
 		var facility_capacity := int(facility.get("capacity", definition.get("capacity", 0)))
-		var facility_served := int(round(float(facility_capacity) * occupancy))
-		var satisfaction: float = clamp(0.52 + staff_ratio * 0.24 + avg_efficiency * 0.16 + avg_charisma * 0.08, 0.0, 1.0)
+		var effective_capacity := int(round(float(facility_capacity) * (1.0 + float(role_contribution.capacity_modifier))))
+		var facility_served := int(round(float(effective_capacity) * occupancy))
+		var satisfaction: float = clamp(0.52 + staff_ratio * 0.22 + avg_efficiency * 0.14 + avg_charisma * 0.07 + float(role_contribution.satisfaction_bonus), 0.0, 1.0)
 
 		revenue += income
 		upkeep += facility_upkeep
@@ -116,7 +119,9 @@ func calculate_daily_operations(guest_demand: int) -> Dictionary:
 			"assigned_staff": assigned_staff.size(),
 			"required_staff": required_staff,
 			"satisfaction": satisfaction,
-			"served_guests": facility_served
+			"served_guests": facility_served,
+			"effective_capacity": effective_capacity,
+			"role_effects": role_contribution.effect_lines
 		})
 
 	var average_satisfaction := 0.0

@@ -264,7 +264,11 @@ func _populate_menus() -> void:
 	hire_menu.clear()
 	for template in DataCatalog.staff_templates:
 		var index := hire_menu.get_item_count()
-		hire_menu.add_item("%s - %s (%d cr)" % [template.name, template.role, int(template.hire_cost)])
+		hire_menu.add_item("%s - %s (%d cr)" % [
+			String(template.get("template_name", template.get("name", "Staff Candidate"))),
+			String(template.get("specialty", "Operations")),
+			int(template.hire_cost)
+		])
 		hire_menu.set_item_metadata(index, template.id)
 
 	_populate_assignment_menus()
@@ -274,7 +278,7 @@ func _populate_assignment_menus() -> void:
 	assign_staff_menu.clear()
 	for staff in StaffManager.staff_roster:
 		var index := assign_staff_menu.get_item_count()
-		assign_staff_menu.add_item("%s - %s" % [staff.name, staff.role])
+		assign_staff_menu.add_item("%s - %s" % [staff.name, StaffManager.get_staff_role_label(staff)])
 		assign_staff_menu.set_item_metadata(index, int(staff.id))
 
 	assign_facility_menu.clear()
@@ -336,10 +340,10 @@ func _refresh_staff() -> void:
 		if not facility.is_empty():
 			assignment = facility.name
 
-		staff_list.add_item("%s | %s %s | eff %.0f%% cha %.0f%% rel %.0f%% | stress %.0f%% | %s" % [
+		staff_list.add_item("%s | %s | %s | eff %.0f%% cha %.0f%% rel %.0f%% | stress %.0f%% | %s" % [
 			staff.name,
-			staff.category,
-			staff.role,
+			StaffManager.get_staff_role_label(staff),
+			staff.specialty,
 			float(staff.efficiency) * 100.0,
 			float(staff.charisma) * 100.0,
 			float(staff.reliability) * 100.0,
@@ -466,6 +470,8 @@ func _show_facility_details(facility_id: int) -> void:
 	var assigned_count := assigned_staff.size()
 	var satisfaction := float(report.get("satisfaction", 0.0))
 	var served_guests := int(report.get("served_guests", 0))
+	var effective_capacity := int(report.get("effective_capacity", facility.get("capacity", 0)))
+	var role_effects: Array = report.get("role_effects", [])
 	var staff_note := "Fully staffed"
 	if assigned_count < required_staff:
 		staff_note = "Needs %d more staff" % (required_staff - assigned_count)
@@ -487,6 +493,7 @@ func _show_facility_details(facility_id: int) -> void:
 		"Assigned payroll: -%d cr" % payroll,
 		"Profit / Loss: %+d cr" % profit,
 		"Guests served: %d" % served_guests,
+		"Effective guest flow capacity: %d" % effective_capacity,
 		"Guest satisfaction: %s" % _format_percent(satisfaction),
 		"",
 		"Staffing: %d/%d - %s" % [assigned_count, required_staff, staff_note],
@@ -499,13 +506,21 @@ func _show_facility_details(facility_id: int) -> void:
 		for staff in assigned_staff:
 			lines.append("- %s, %s | salary %d cr | eff %s | cha %s | rel %s | stress %s" % [
 				staff.name,
-				staff.role,
+				StaffManager.get_staff_role_label(staff),
 				int(staff.salary),
 				_format_percent(float(staff.efficiency)),
 				_format_percent(float(staff.charisma)),
 				_format_percent(float(staff.reliability)),
 				_format_percent(float(staff.stress))
 			])
+
+	lines.append("")
+	lines.append("Role effects:")
+	if role_effects.is_empty():
+		lines.append("- None yet. Assign staff to unlock role bonuses.")
+	else:
+		for effect in role_effects:
+			lines.append("- %s" % String(effect))
 
 	facility_details_dialog.title = "%s Details" % facility.name
 	facility_details_dialog.dialog_text = "\n".join(lines)
