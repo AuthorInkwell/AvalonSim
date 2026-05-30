@@ -31,7 +31,7 @@ func roll_daily_event(operations: Dictionary, guest_demand: int) -> Dictionary:
 	if randf() > chance or DataCatalog.events.is_empty():
 		return result
 
-	var event := _pick_weighted_event(DataCatalog.events)
+	var event: Dictionary = _pick_weighted_event(DataCatalog.events)
 	var effects: Dictionary = event.get("effects", {})
 	result.triggered = true
 	result.title = event.get("title", "Avalon Incident")

@@ -100,7 +100,7 @@ func calculate_daily_operations(guest_demand: int) -> Dictionary:
 		var facility_upkeep := int(facility.get("upkeep", definition.get("upkeep", 0)))
 		var facility_capacity := int(facility.get("capacity", definition.get("capacity", 0)))
 		var facility_served := int(round(float(facility_capacity) * occupancy))
-		var satisfaction := clamp(0.52 + staff_ratio * 0.24 + avg_efficiency * 0.16 + avg_charisma * 0.08, 0.0, 1.0)
+		var satisfaction: float = clamp(0.52 + staff_ratio * 0.24 + avg_efficiency * 0.16 + avg_charisma * 0.08, 0.0, 1.0)
 
 		revenue += income
 		upkeep += facility_upkeep

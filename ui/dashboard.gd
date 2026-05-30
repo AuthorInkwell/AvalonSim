@@ -427,7 +427,7 @@ func _on_assign_pressed() -> void:
 func _on_day_advanced(summary: Dictionary) -> void:
 	status_label.text = "Day %d complete. Profit: %+d cr." % [int(summary.day), int(summary.profit)]
 	if summary.get("event", {}).get("triggered", false):
-		var event := summary.event
+		var event: Dictionary = summary.event
 		event_dialog.title = event.title
 		event_dialog.dialog_text = event.description
 		event_dialog.popup_centered(Vector2i(460, 220))

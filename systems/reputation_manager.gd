@@ -25,7 +25,7 @@ func calculate_guest_demand(day: int) -> int:
 	var safety := float(scores.get("safety", 50))
 	var decadence := float(scores.get("decadence", 45))
 	var reputation_factor := (hospitality + luxury + safety + decadence) / 200.0
-	var growth := min(day - 1, 30) * 0.35
+	var growth: float = float(min(day - 1, 30)) * 0.35
 	return max(4, int(round(8.0 + growth + reputation_factor * 8.0)))
 
 

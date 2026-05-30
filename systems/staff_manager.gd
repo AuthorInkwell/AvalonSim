@@ -18,7 +18,7 @@ func hire_from_template(template: Dictionary) -> Dictionary:
 	if template.is_empty():
 		return {"success": false, "message": "Unknown staff template."}
 
-	var staff := {
+	var staff: Dictionary = {
 		"id": next_staff_id,
 		"template_id": template.get("id", ""),
 		"name": template.get("name", "New Hire"),
@@ -51,7 +51,7 @@ func fire_staff(staff_id: int) -> Dictionary:
 
 
 func assign_staff(staff_id: int, facility_id: int) -> Dictionary:
-	var staff := get_staff_by_id(staff_id)
+	var staff: Dictionary = get_staff_by_id(staff_id)
 	if staff.is_empty():
 		return {"success": false, "message": "Staff member not found."}
 
@@ -63,7 +63,7 @@ func assign_staff(staff_id: int, facility_id: int) -> Dictionary:
 	if facility_id == -1:
 		return {"success": true, "message": "%s is now unassigned." % staff.name}
 
-	var facility := FacilityManager.get_facility_by_id(facility_id)
+	var facility: Dictionary = FacilityManager.get_facility_by_id(facility_id)
 	return {"success": true, "message": "%s assigned to %s." % [staff.name, facility.name]}
 
 
