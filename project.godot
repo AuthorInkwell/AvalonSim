@@ -1,0 +1,33 @@
+; Engine configuration file.
+; Keep this file text-based and stable for Git collaboration.
+
+config_version=5
+
+[application]
+
+config/name="Avalon: Paradise Engine"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.2")
+config/icon="res://art/icon.svg"
+
+[autoload]
+
+DataCatalog="*res://systems/data_catalog.gd"
+ReputationManager="*res://systems/reputation_manager.gd"
+FacilityManager="*res://systems/facility_manager.gd"
+StaffManager="*res://systems/staff_manager.gd"
+EventManager="*res://systems/event_manager.gd"
+EconomyManager="*res://systems/economy_manager.gd"
+SaveManager="*res://systems/save_manager.gd"
+GameState="*res://systems/game_state.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"

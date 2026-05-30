@@ -1,0 +1,93 @@
+[
+  {
+    "id": "starter_hotel",
+    "name": "Starter Hotel",
+    "district": "Central Lagoon",
+    "description": "A polished boutique tower for Avalon's first guests.",
+    "build_cost": 5000,
+    "upkeep": 200,
+    "build_time": 1,
+    "capacity": 12,
+    "staff_required": 2,
+    "base_income": 1200,
+    "reputation_focus": ["hospitality", "luxury"]
+  },
+  {
+    "id": "cocktail_lounge",
+    "name": "Cocktail Lounge",
+    "district": "Neon Marina",
+    "description": "Low lights, expensive glassware, and excellent gossip.",
+    "build_cost": 3500,
+    "upkeep": 175,
+    "build_time": 1,
+    "capacity": 8,
+    "staff_required": 1,
+    "base_income": 850,
+    "reputation_focus": ["decadence", "hospitality"]
+  },
+  {
+    "id": "spa",
+    "name": "Spa",
+    "district": "Palm Atrium",
+    "description": "Wellness treatments tuned for guests who measure relaxation in market indices.",
+    "build_cost": 4200,
+    "upkeep": 220,
+    "build_time": 2,
+    "capacity": 7,
+    "staff_required": 1,
+    "base_income": 1000,
+    "reputation_focus": ["luxury", "hospitality"]
+  },
+  {
+    "id": "entertainment_venue",
+    "name": "Entertainment Venue",
+    "district": "Starlight Concourse",
+    "description": "A modular stage for concerts, cabaret, and spectacular product launches.",
+    "build_cost": 6500,
+    "upkeep": 350,
+    "build_time": 3,
+    "capacity": 18,
+    "staff_required": 3,
+    "base_income": 1850,
+    "reputation_focus": ["decadence", "luxury"]
+  },
+  {
+    "id": "themed_roleplay_venue",
+    "name": "Themed Roleplay Venue",
+    "district": "Epoch Arcade",
+    "description": "Immersive character-led scenarios with strict safety protocols and impeccable set dressing.",
+    "build_cost": 7200,
+    "upkeep": 420,
+    "build_time": 3,
+    "capacity": 14,
+    "staff_required": 3,
+    "base_income": 2100,
+    "reputation_focus": ["decadence", "secrecy", "hospitality"]
+  },
+  {
+    "id": "research_lab",
+    "name": "Research Lab",
+    "district": "Glasshouse Annex",
+    "description": "Applied futurism for better amenities, cleaner logistics, and questionable patents.",
+    "build_cost": 8000,
+    "upkeep": 500,
+    "build_time": 4,
+    "capacity": 4,
+    "staff_required": 2,
+    "base_income": 650,
+    "reputation_focus": ["innovation"]
+  },
+  {
+    "id": "security_office",
+    "name": "Security Office",
+    "district": "Service Spine",
+    "description": "Discreet risk management for a resort where every secret arrives by private jet.",
+    "build_cost": 3000,
+    "upkeep": 160,
+    "build_time": 1,
+    "capacity": 0,
+    "staff_required": 1,
+    "base_income": 150,
+    "reputation_focus": ["safety", "secrecy"]
+  }
+]
