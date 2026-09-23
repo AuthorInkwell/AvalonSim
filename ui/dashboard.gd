@@ -7,6 +7,7 @@ var reputation_list: ItemList
 var event_log: ItemList
 var daily_summary: RichTextLabel
 var build_menu: OptionButton
+var work_mode_menu: OptionButton
 var hire_menu: OptionButton
 var assign_staff_menu: OptionButton
 var assign_facility_menu: OptionButton
@@ -134,6 +135,21 @@ func _build_facility_panel() -> PanelContainer:
 	build_button.pressed.connect(_on_build_pressed)
 	build_row.add_child(build_button)
 
+	var mode_row := HBoxContainer.new()
+	mode_row.add_theme_constant_override("separation", 6)
+	box.add_child(mode_row)
+
+	work_mode_menu = OptionButton.new()
+	work_mode_menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	work_mode_menu.add_item("Select a built facility with work modes")
+	work_mode_menu.disabled = true
+	mode_row.add_child(work_mode_menu)
+
+	var mode_button := Button.new()
+	mode_button.text = "Set Mode"
+	mode_button.pressed.connect(_on_set_work_mode_pressed)
+	mode_row.add_child(mode_button)
+
 	return panel
 
 
@@ -235,6 +251,7 @@ func _connect_signals() -> void:
 	StaffManager.staff_changed.connect(_on_state_changed)
 	ReputationManager.reputation_changed.connect(_on_state_changed)
 	EconomyManager.transaction_completed.connect(_on_transaction_completed)
+	facility_list.item_selected.connect(_on_facility_item_selected)
 	facility_list.item_activated.connect(_on_facility_item_activated)
 
 
@@ -258,8 +275,15 @@ func _populate_menus() -> void:
 	build_menu.clear()
 	for definition in DataCatalog.facilities:
 		var index := build_menu.get_item_count()
-		build_menu.add_item("%s (%d cr, %dd)" % [definition.name, int(definition.build_cost), int(definition.build_time)])
+		var category_label := String(definition.get("category", "uncategorized")).capitalize()
+		var menu_label := "[%s] %s" % [category_label, definition.name]
+		if definition.has("build_cost"):
+			menu_label += " (%d cr, %dd)" % [int(definition.build_cost), int(definition.build_time)]
+		else:
+			menu_label += " (spec incomplete)"
+		build_menu.add_item(menu_label)
 		build_menu.set_item_metadata(index, definition.id)
+		build_menu.set_item_disabled(index, not bool(definition.get("buildable", true)) or not definition.has("build_cost"))
 
 	hire_menu.clear()
 	for template in DataCatalog.staff_templates:
@@ -314,7 +338,7 @@ func _refresh_facilities() -> void:
 		facility_list.add_item("%s L%d | %s | cap %d | staff %d/%d | base %d cr" % [
 			facility.name,
 			int(facility.level),
-			facility.district,
+			String(facility.get("category", "uncategorized")).capitalize(),
 			int(facility.capacity),
 			assigned,
 			int(facility.staff_required),
@@ -336,7 +360,7 @@ func _refresh_staff() -> void:
 	staff_list.clear()
 	for staff in StaffManager.staff_roster:
 		var assignment := "Unassigned"
-		var facility := FacilityManager.get_facility_by_id(int(staff.get("assigned_facility_id", -1)))
+		var facility: Dictionary = FacilityManager.get_facility_by_id(int(staff.get("assigned_facility_id", -1)))
 		if not facility.is_empty():
 			assignment = facility.name
 
@@ -379,6 +403,14 @@ func _refresh_daily_summary() -> void:
 		int(summary.guest_demand),
 		", ".join(completed_names) if not completed_names.is_empty() else "None"
 	]
+	var utility_totals: Dictionary = summary.get("operations", {}).get("utility_totals", {})
+	daily_summary.text += "\nUtilities: power %d produced / %d used, storage %d; waste %d removed / %d produced" % [
+		int(utility_totals.get("power_production", 0)),
+		int(utility_totals.get("power_use", 0)),
+		int(utility_totals.get("energy_storage", 0)),
+		int(utility_totals.get("waste_removal", 0)),
+		int(utility_totals.get("waste_production", 0))
+	]
 
 
 func _refresh_event_log() -> void:
@@ -418,6 +450,19 @@ func _on_build_pressed() -> void:
 	_refresh()
 
 
+func _on_set_work_mode_pressed() -> void:
+	var selected_items := facility_list.get_selected_items()
+	if selected_items.is_empty() or work_mode_menu.selected < 0 or work_mode_menu.disabled:
+		status_label.text = "Select a built facility with work modes."
+		return
+	var row_data: Dictionary = facility_list.get_item_metadata(int(selected_items[0]))
+	var facility_id := int(row_data.get("id", -1))
+	var mode_id := String(work_mode_menu.get_item_metadata(work_mode_menu.selected))
+	var result := EconomyManager.set_facility_work_mode(facility_id, mode_id)
+	status_label.text = result.message
+	_refresh()
+
+
 func _on_hire_pressed() -> void:
 	if hire_menu.selected < 0:
 		return
@@ -453,6 +498,35 @@ func _on_facility_item_activated(index: int) -> void:
 		_show_construction_details(int(row_data.get("id", -1)))
 
 
+func _on_facility_item_selected(index: int) -> void:
+	work_mode_menu.clear()
+	work_mode_menu.disabled = true
+	var metadata: Variant = facility_list.get_item_metadata(index)
+	if typeof(metadata) != TYPE_DICTIONARY:
+		work_mode_menu.add_item("No work modes")
+		return
+	var row_data: Dictionary = metadata
+	if row_data.get("type", "") != "facility":
+		work_mode_menu.add_item("No work modes during construction")
+		return
+	var facility: Dictionary = FacilityManager.get_facility_by_id(int(row_data.get("id", -1)))
+	var definition: Dictionary = DataCatalog.get_facility(String(facility.get("definition_id", "")))
+	var modes: Array = definition.get("work_modes", [])
+	if modes.is_empty():
+		work_mode_menu.add_item("No configurable work modes")
+		return
+
+	var selected_mode := String(facility.get("work_mode", definition.get("default_work_mode", "")))
+	for mode_data in modes:
+		var mode: Dictionary = mode_data
+		var mode_index := work_mode_menu.get_item_count()
+		work_mode_menu.add_item(String(mode.get("name", mode.get("id", "Mode"))))
+		work_mode_menu.set_item_metadata(mode_index, mode.get("id", ""))
+		if String(mode.get("id", "")) == selected_mode:
+			work_mode_menu.select(mode_index)
+	work_mode_menu.disabled = false
+
+
 func _show_facility_details(facility_id: int) -> void:
 	var facility: Dictionary = FacilityManager.get_facility_by_id(facility_id)
 	if facility.is_empty():
@@ -472,6 +546,9 @@ func _show_facility_details(facility_id: int) -> void:
 	var served_guests := int(report.get("served_guests", 0))
 	var effective_capacity := int(report.get("effective_capacity", facility.get("capacity", 0)))
 	var role_effects: Array = report.get("role_effects", [])
+	var effective_attributes: Dictionary = report.get("effective_attributes", {})
+	var special_effects: Array = report.get("special_effects", [])
+	var definition := DataCatalog.get_facility(String(facility.get("definition_id", "")))
 	var staff_note := "Fully staffed"
 	if assigned_count < required_staff:
 		staff_note = "Needs %d more staff" % (required_staff - assigned_count)
@@ -482,10 +559,11 @@ func _show_facility_details(facility_id: int) -> void:
 		"%s" % facility.name,
 		"%s" % facility.get("description", ""),
 		"",
-		"District: %s" % facility.get("district", "Avalon"),
+		"Category: %s" % String(facility.get("category", "uncategorized")).capitalize(),
 		"Level: %d" % int(facility.get("level", 1)),
-		"Capacity: %d guests" % int(facility.get("capacity", 0)),
+		"Capacity: %d %s" % [int(facility.get("capacity", 0)), "staff" if facility.get("capacity_scope", "guest") == "staff" else "guests"],
 		"Reputation focus: %s" % _format_focuses(facility.get("reputation_focus", [])),
+		"Balance tiers: %s" % _format_tiers(definition.get("tier_labels", {})),
 		"",
 		"Projected today (demand %d):" % GameState.guest_demand,
 		"Revenue: %+d cr" % revenue,
@@ -495,6 +573,9 @@ func _show_facility_details(facility_id: int) -> void:
 		"Guests served: %d" % served_guests,
 		"Effective guest flow capacity: %d" % effective_capacity,
 		"Guest satisfaction: %s" % _format_percent(satisfaction),
+		"",
+		"Effective attributes: %s" % _format_attributes(effective_attributes),
+		"Work mode: %s" % _get_work_mode_name(facility, definition),
 		"",
 		"Staffing: %d/%d - %s" % [assigned_count, required_staff, staff_note],
 		"Assigned staff:"
@@ -520,6 +601,14 @@ func _show_facility_details(facility_id: int) -> void:
 		lines.append("- None yet. Assign staff to unlock role bonuses.")
 	else:
 		for effect in role_effects:
+			lines.append("- %s" % String(effect))
+
+	lines.append("")
+	lines.append("Special effects and hooks:")
+	if special_effects.is_empty():
+		lines.append("- None")
+	else:
+		for effect in special_effects:
 			lines.append("- %s" % String(effect))
 
 	facility_details_dialog.title = "%s Details" % facility.name
@@ -570,6 +659,34 @@ func _format_focuses(focus_values: Array) -> String:
 
 func _format_percent(value: float) -> String:
 	return "%.0f%%" % (value * 100.0)
+
+
+func _format_tiers(tiers: Dictionary) -> String:
+	if tiers.is_empty():
+		return "Unspecified"
+	var parts: Array = []
+	for key in tiers:
+		parts.append("%s %s" % [String(key).replace("_", " "), String(tiers[key]).replace("_", "-")])
+	return ", ".join(parts)
+
+
+func _format_attributes(attributes: Dictionary) -> String:
+	var parts: Array = []
+	for key in ["comfort", "pleasure", "safety", "power_use", "power_production", "energy_storage", "waste_production", "waste_removal"]:
+		if attributes.has(key):
+			parts.append("%s %.2f" % [String(key).replace("_", " "), float(attributes[key])])
+	return ", ".join(parts) if not parts.is_empty() else "None"
+
+
+func _get_work_mode_name(facility: Dictionary, definition: Dictionary) -> String:
+	var selected_mode := String(facility.get("work_mode", ""))
+	if selected_mode.is_empty():
+		return "None"
+	for mode_data in definition.get("work_modes", []):
+		var mode: Dictionary = mode_data
+		if String(mode.get("id", "")) == selected_mode:
+			return String(mode.get("name", selected_mode))
+	return selected_mode
 
 
 func _on_day_advanced(summary: Dictionary) -> void:

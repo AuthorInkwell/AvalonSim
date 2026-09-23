@@ -1,0 +1,54 @@
+{
+  "tiers": {
+    "build_cost": {
+      "low": 2500,
+      "medium": 6000,
+      "high": 12000
+    },
+    "maintenance": {
+      "low": 100,
+      "medium": 260,
+      "high": 600
+    },
+    "capacity": {
+      "low": 6,
+      "medium": 14,
+      "high": 28
+    },
+    "fee": {
+      "none": 0,
+      "low": 50,
+      "medium": 140,
+      "high": 320
+    },
+    "effect": {
+      "none": 0.0,
+      "low": 0.2,
+      "medium": 0.5,
+      "high": 0.8
+    },
+    "utility": {
+      "none": 0,
+      "low": 10,
+      "medium": 25,
+      "high": 50
+    },
+    "staffing": {
+      "none": 0,
+      "low": 1,
+      "medium": 2,
+      "high": 4
+    },
+    "build_time": {
+      "low": 1,
+      "medium": 2,
+      "high": 3
+    }
+  },
+  "ranges": {
+    "none_to_low": ["none", "low"],
+    "low_to_medium": ["low", "medium"],
+    "medium_to_high": ["medium", "high"]
+  },
+  "income_per_fee_capacity": 0.7
+}

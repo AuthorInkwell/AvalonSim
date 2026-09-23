@@ -44,7 +44,7 @@ func advance_day() -> Dictionary:
 
 func get_state() -> Dictionary:
 	return {
-		"version": 1,
+		"version": 2,
 		"day": day,
 		"funds": funds,
 		"daily_profit": daily_profit,

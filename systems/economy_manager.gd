@@ -46,6 +46,8 @@ func build_facility(definition_id: String) -> Dictionary:
 	var definition := DataCatalog.get_facility(definition_id)
 	if definition.is_empty():
 		return {"success": false, "message": "Unknown facility."}
+	if not bool(definition.get("buildable", true)) or not definition.has("build_cost"):
+		return {"success": false, "message": "%s is defined, but its construction values are not specified yet." % definition.get("name", definition_id)}
 
 	var build_cost := int(definition.get("build_cost", 0))
 	if GameState.funds < build_cost:
@@ -89,6 +91,13 @@ func fire_staff(staff_id: int) -> Dictionary:
 
 func assign_staff(staff_id: int, facility_id: int) -> Dictionary:
 	var result := StaffManager.assign_staff(staff_id, facility_id)
+	if result.get("success", false):
+		transaction_completed.emit(result.message)
+	return result
+
+
+func set_facility_work_mode(facility_id: int, mode_id: String) -> Dictionary:
+	var result := FacilityManager.set_work_mode(facility_id, mode_id)
 	if result.get("success", false):
 		transaction_completed.emit(result.message)
 	return result
