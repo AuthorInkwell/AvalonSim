@@ -226,8 +226,10 @@ func _build_intelligence_panel() -> PanelContainer:
 	box.add_child(summary_heading)
 
 	daily_summary = RichTextLabel.new()
-	daily_summary.fit_content = true
+	daily_summary.fit_content = false
+	daily_summary.scroll_active = true
 	daily_summary.custom_minimum_size = Vector2(0, 150)
+	daily_summary.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(daily_summary)
 
 	var events_heading := Label.new()
