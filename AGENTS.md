@@ -39,6 +39,19 @@ godot --headless --path . res://scenes/main.tscn --quit-after 1
 
 Main scene: `res://scenes/main.tscn` (1280×720 city-builder UI).
 
+### Web export and hosted playtest
+
+Install the official Godot 4.2 Web templates and build the static package with:
+
+```bash
+bash scripts/install-godot-export-templates.sh
+bash scripts/export-web.sh
+```
+
+The output under `build/web/` includes an isolation service worker required by Godot 4.2. Test the package through HTTP/HTTPS, not `file://`.
+
+`.github/workflows/deploy-web-playtest.yml` builds and deploys `main` to GitHub Pages. Pages must use **GitHub Actions** as its publishing source. Do not commit generated `build/` output; the workflow uploads it as a Pages artifact.
+
 ### Lint / tests
 
 There is no ESLint or pytest suite. Validate changes by:
