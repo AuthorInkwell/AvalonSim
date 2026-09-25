@@ -11,6 +11,8 @@ var funds := 25000:
 		funds_changed.emit()
 var daily_profit := 0
 var guest_demand := 12
+var loan_balance := 0
+var loan_daily_payment := 0
 var last_day_summary: Dictionary = {}
 
 
@@ -19,6 +21,8 @@ func start_new_game() -> void:
 	funds = 25000
 	daily_profit = 0
 	guest_demand = 12
+	loan_balance = 0
+	loan_daily_payment = 0
 	last_day_summary = {}
 	ReputationManager.setup_new_game()
 	StaffManager.setup_new_game()
@@ -45,11 +49,13 @@ func advance_day() -> Dictionary:
 
 func get_state() -> Dictionary:
 	return {
-		"version": 3,
+		"version": 4,
 		"day": day,
 		"funds": funds,
 		"daily_profit": daily_profit,
 		"guest_demand": guest_demand,
+		"loan_balance": loan_balance,
+		"loan_daily_payment": loan_daily_payment,
 		"last_day_summary": last_day_summary.duplicate(true),
 		"map_manager": MapManager.get_state(),
 		"facility_manager": FacilityManager.get_state(),
@@ -64,6 +70,8 @@ func load_state(state: Dictionary) -> void:
 	funds = int(state.get("funds", 25000))
 	daily_profit = int(state.get("daily_profit", 0))
 	guest_demand = int(state.get("guest_demand", 12))
+	loan_balance = int(state.get("loan_balance", 0))
+	loan_daily_payment = int(state.get("loan_daily_payment", 0))
 	last_day_summary = state.get("last_day_summary", {}).duplicate(true)
 	ReputationManager.load_state(state.get("reputation_manager", {}))
 	FacilityManager.load_state(state.get("facility_manager", {}))
