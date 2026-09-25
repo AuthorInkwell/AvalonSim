@@ -18,5 +18,6 @@ mkdir -p "${OUTPUT_DIR}"
 
 cp "${PROJECT_ROOT}/web/coi-bootstrap.js" "${OUTPUT_DIR}/coi-bootstrap.js"
 cp "${PROJECT_ROOT}/web/index.service.worker.js" "${OUTPUT_DIR}/index.service.worker.js"
+cp -R "${PROJECT_ROOT}/web/playtest/." "${OUTPUT_DIR}/"
 
 printf 'Avalon Web export written to %s\n' "${OUTPUT_DIR}"
