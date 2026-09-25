@@ -4,9 +4,9 @@ Guidance for cloud and automated agents working in this repository.
 
 ## Product
 
-**Avalon: Paradise Engine** is a Godot 4 desktop management/simulation prototype. There is no web server, database, or package manager (npm/pip). Development requires the Godot 4.2 engine only.
+**Avalon: Paradise Engine** is a Godot 4 desktop city-building and management simulation prototype. There is no web server, database, or package manager (npm/pip). Development requires the Godot 4.2 engine only.
 
-The playable project lives on branch `cursor/godot-sim-framework-b716` until it is merged to `main`.
+The playable project is on `main`. Create normal task branches from the latest `main`; the former scaffold branch is obsolete.
 
 ## Cursor Cloud specific instructions
 
@@ -37,24 +37,23 @@ godot --path . --display-driver x11 --rendering-driver opengl3 res://scenes/main
 godot --headless --path . res://scenes/main.tscn --quit-after 1
 ```
 
-Main scene: `res://scenes/main.tscn` (1280×720 dashboard UI).
+Main scene: `res://scenes/main.tscn` (1280×720 city-builder UI).
 
 ### Lint / tests
 
-There is no ESLint, pytest, or CI test suite. Validate changes by:
+There is no ESLint or pytest suite. Validate changes by:
 
 1. Opening/running the project in Godot 4.2 without GDScript parse errors.
-2. Using the dashboard: build a facility, hire staff, assign staff, **Advance Day**, Save/Load.
-
-Audio falls back to the dummy driver in headless/cloud environments; that is expected.
-
-### Branch note
-
-If `main` only contains `README.md`, check out the Godot scaffold branch before running:
+2. Running the Godot checks:
 
 ```bash
-git checkout cursor/godot-sim-framework-b716
+godot --headless --path . res://tests/map_system_test.tscn
+godot --headless --path . res://tests/structure_catalog_test.tscn
 ```
+
+3. Using the city-builder UI: place roads and a facility, hire and assign staff, **Advance Day**, use the minimap, and Save/Load.
+
+Audio falls back to the dummy driver in headless/cloud environments; that is expected.
 
 ### Saves
 

@@ -1,20 +1,21 @@
 # Avalon: Paradise Engine
 
-Avalon: Paradise Engine is an early Godot 4 management/simulation prototype about operating a futuristic luxury resort island. The first milestone focuses on a stable economic loop instead of art polish or narrative depth.
+Avalon: Paradise Engine is an early Godot 4 city-builder and management simulation about operating a futuristic luxury resort island. The current milestone wraps the established economic loop in a spatial, turn-based island interface.
 
 ## Current Prototype
 
 - Godot 4.x project scaffold with Git-friendly text assets.
 - Autoload managers for game state, economy, facilities, staff, reputation, events, save/load, and data catalogs.
 - Data-driven facility, staff, event, and guest type definitions in JSON.
-- Basic dashboard UI for:
+- A flat 48×32 island map with coastline, an unbuildable mountain area, and quick navigation through a minimap.
+- Data-derived, rotatable multi-tile building footprints plus placeable roads and road-access checks.
+- An early-city-builder dashboard UI for:
   - advancing one day at a time,
-  - viewing funds, demand, staff count, and capacity,
-  - building facilities,
+  - viewing funds, category demand, satisfaction, staff count, and capacity,
+  - placing facilities and roads on buildable terrain,
   - hiring staff,
   - assigning staff to facilities,
-  - tracking reputation,
-  - reviewing daily reports and event logs,
+  - reviewing detailed budgets and a concise morning briefing,
   - saving/loading a local JSON save.
 
 ## Project Layout
@@ -35,7 +36,9 @@ Avalon: Paradise Engine is an early Godot 4 management/simulation prototype abou
 
 1. Open the repository folder in Godot 4.x.
 2. Run the main scene (`res://scenes/main.tscn`).
-3. Use the dashboard to build, hire, assign staff, and advance the day.
+3. Use the dashboard to place buildings and roads, hire and assign staff, and advance the day.
+
+Facilities remain in the existing authoritative simulation managers. The map stores their position, orientation, footprint, construction state, and road access; it does not replace the economic, staffing, reputation, or event systems.
 
 Saves are written to `user://avalon_save.json`, which keeps local playtest state out of the repository.
 
