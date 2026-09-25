@@ -43,6 +43,7 @@ func cancel_construction(project_id: int) -> Dictionary:
 		var project: Dictionary = construction_queue[index]
 		if int(project.project_id) == project_id:
 			construction_queue.remove_at(index)
+			MapManager.remove_construction(project_id)
 			construction_changed.emit()
 			return {"success": true, "project": project}
 	return {"success": false, "message": "Construction project not found."}
@@ -55,6 +56,7 @@ func progress_construction() -> Array:
 		project.days_remaining = int(project.days_remaining) - 1
 		if int(project.days_remaining) <= 0:
 			var facility := _add_completed_facility(String(project.definition_id))
+			MapManager.complete_construction(project, facility)
 			completed.append(facility)
 			construction_queue.remove_at(index)
 
@@ -107,14 +109,16 @@ func calculate_daily_operations(guest_demand: int) -> Dictionary:
 		var charisma_modifier := 0.9 + avg_charisma * 0.15
 		var base_income := float(facility.get("base_income", definition.get("base_income", 0)))
 		var experience_modifier := 1.0 + float(profile.get("pleasure", 0.0)) * 0.08
-		var income := int(round(base_income * occupancy * level_modifier * staff_modifier * charisma_modifier * experience_modifier))
+		var road_access := MapManager.facility_has_road_access(facility)
+		var access_modifier := 1.0 if road_access else 0.5
+		var income := int(round(base_income * occupancy * level_modifier * staff_modifier * charisma_modifier * experience_modifier * access_modifier))
 		var base_upkeep := int(facility.get("upkeep", definition.get("upkeep", 0)))
 		var facility_upkeep := int(round(float(base_upkeep) * (1.0 - float(role_contribution.upkeep_reduction))))
 		var facility_capacity := 0
 		if String(facility.get("capacity_scope", definition.get("capacity_scope", "guest"))) == "guest":
 			facility_capacity = int(facility.get("capacity", definition.get("capacity", 0)))
 		var effective_capacity := int(round(float(facility_capacity) * (1.0 + float(role_contribution.capacity_modifier))))
-		var facility_served := int(round(float(effective_capacity) * occupancy))
+		var facility_served := int(round(float(effective_capacity) * occupancy * access_modifier))
 		var experience_satisfaction := (float(profile.get("comfort", 0.0)) + float(profile.get("pleasure", 0.0)) + float(profile.get("safety", 0.0))) * 0.05
 		var satisfaction: float = clamp(0.52 + staff_ratio * 0.22 + avg_efficiency * 0.14 + avg_charisma * 0.07 + experience_satisfaction + float(role_contribution.satisfaction_bonus), 0.0, 1.0)
 
@@ -137,6 +141,7 @@ func calculate_daily_operations(guest_demand: int) -> Dictionary:
 			"satisfaction": satisfaction,
 			"served_guests": facility_served,
 			"effective_capacity": effective_capacity,
+			"road_access": road_access,
 			"role_effects": role_contribution.effect_lines,
 			"effective_attributes": profile,
 			"special_effects": profile.get("special_effects", [])

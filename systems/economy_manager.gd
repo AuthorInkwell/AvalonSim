@@ -2,6 +2,8 @@ extends Node
 
 signal transaction_completed(message)
 
+const ROAD_COST := 25
+
 
 func setup_new_game() -> void:
 	pass
@@ -60,6 +62,45 @@ func build_facility(definition_id: String) -> Dictionary:
 		return result
 
 	transaction_completed.emit(result.message)
+	return result
+
+
+func place_facility(definition_id: String, origin: Vector2i, orientation: int = 0) -> Dictionary:
+	var placement_check := MapManager.can_place_facility(definition_id, origin, orientation)
+	if not placement_check.get("success", false):
+		return placement_check
+
+	var result := build_facility(definition_id)
+	if not result.get("success", false):
+		return result
+
+	var project: Dictionary = result.project
+	var reservation := MapManager.reserve_construction(project, origin, orientation)
+	if not reservation.get("success", false):
+		FacilityManager.cancel_construction(int(project.project_id))
+		GameState.funds += int(project.get("build_cost", 0))
+		return reservation
+	result["message"] = "%s placed at %d, %d%s" % [
+		project.name,
+		origin.x,
+		origin.y,
+		" (no road access)" if not reservation.get("road_access", false) else ""
+	]
+	transaction_completed.emit(result.message)
+	return result
+
+
+func place_road(cell: Vector2i) -> Dictionary:
+	var check := MapManager.can_place_road(cell)
+	if not check.get("success", false):
+		return check
+	if GameState.funds < ROAD_COST:
+		return {"success": false, "message": "Insufficient funds for a road tile (%d cr)." % ROAD_COST}
+	var result := MapManager.place_road(cell)
+	if result.get("success", false):
+		GameState.funds -= ROAD_COST
+		result["message"] = "Road placed for %d cr." % ROAD_COST
+		transaction_completed.emit(result.message)
 	return result
 
 

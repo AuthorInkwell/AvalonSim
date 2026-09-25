@@ -166,9 +166,33 @@ func _resolve_facility_definition(raw_definition: Dictionary) -> Dictionary:
 		else:
 			definition["base_income"] = 0
 
+	if not definition.has("footprint"):
+		definition["footprint"] = _default_footprint(definition)
+
 	definition["tier_labels"] = tier_labels
 	definition["district"] = definition.get("district", String(definition.get("category", "Avalon")).capitalize())
 	return definition
+
+
+func _default_footprint(definition: Dictionary) -> Array:
+	match String(definition.get("size", "")):
+		"small":
+			return [2, 2]
+		"medium":
+			return [3, 2]
+		"large":
+			return [3, 3]
+
+	match String(definition.get("category", "")):
+		"lodgings":
+			return [3, 2]
+		"attractions":
+			return [3, 3]
+		"amenities", "support":
+			return [2, 2]
+		"utility":
+			return [2, 2]
+	return [2, 2]
 
 
 func _index_by_id(items: Array) -> Dictionary:
