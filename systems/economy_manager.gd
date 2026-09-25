@@ -3,6 +3,9 @@ extends Node
 signal transaction_completed(message)
 
 const ROAD_COST := 25
+const LOAN_PRINCIPAL := 10000
+const LOAN_TOTAL_REPAYMENT := 12000
+const LOAN_DAILY_PAYMENT := 500
 
 
 func setup_new_game() -> void:
@@ -18,12 +21,17 @@ func process_day() -> Dictionary:
 	var payroll := StaffManager.calculate_daily_payroll()
 	var event_result := EventManager.roll_daily_event(operations, guest_demand)
 	var reputation_changes := ReputationManager.apply_daily_results(operations, event_result, construction_completed)
+	var loan_payment := get_projected_loan_payment()
 
 	StaffManager.update_after_day(operations, event_result)
 
 	var revenue := int(operations.get("revenue", 0)) + int(event_result.get("revenue_delta", 0))
-	var expenses := int(operations.get("upkeep", 0)) + payroll + int(event_result.get("expense_delta", 0))
+	var expenses := int(operations.get("upkeep", 0)) + payroll + loan_payment + int(event_result.get("expense_delta", 0))
 	var profit := revenue - expenses
+	if loan_payment > 0:
+		GameState.loan_balance = maxi(0, GameState.loan_balance - loan_payment)
+		if GameState.loan_balance == 0:
+			GameState.loan_daily_payment = 0
 	GameState.funds += profit
 	GameState.daily_profit = profit
 
@@ -37,11 +45,38 @@ func process_day() -> Dictionary:
 		"funds": GameState.funds,
 		"payroll": payroll,
 		"upkeep": int(operations.get("upkeep", 0)),
+		"loan_payment": loan_payment,
+		"loan_balance": GameState.loan_balance,
 		"operations": operations,
 		"event": event_result,
 		"reputation_changes": reputation_changes,
 		"construction_completed": construction_completed
 	}
+
+
+func take_loan() -> Dictionary:
+	if GameState.loan_balance > 0:
+		return {
+			"success": false,
+			"message": "Avalon already has an outstanding loan of %d cr." % GameState.loan_balance
+		}
+
+	GameState.funds += LOAN_PRINCIPAL
+	GameState.loan_balance = LOAN_TOTAL_REPAYMENT
+	GameState.loan_daily_payment = LOAN_DAILY_PAYMENT
+	var message := "Loan approved: +%d cr, repaid at %d cr/day (%d cr total)." % [
+		LOAN_PRINCIPAL,
+		LOAN_DAILY_PAYMENT,
+		LOAN_TOTAL_REPAYMENT
+	]
+	transaction_completed.emit(message)
+	return {"success": true, "message": message}
+
+
+func get_projected_loan_payment() -> int:
+	if GameState.loan_balance <= 0:
+		return 0
+	return mini(GameState.loan_daily_payment, GameState.loan_balance)
 
 
 func build_facility(definition_id: String) -> Dictionary:

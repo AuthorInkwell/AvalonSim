@@ -21,6 +21,7 @@ var map_view: Control
 var minimap_view: Control
 var daily_dialog: AcceptDialog
 var budget_dialog: AcceptDialog
+var loan_button: Button
 var staff_dialog: AcceptDialog
 var facility_dialog: AcceptDialog
 var staff_list: ItemList
@@ -322,6 +323,8 @@ func _build_dialogs() -> void:
 	budget_dialog = AcceptDialog.new()
 	budget_dialog.title = "Avalon Detailed Budget"
 	add_child(budget_dialog)
+	loan_button = budget_dialog.add_button("Take 10,000 cr Loan", false, "take_loan")
+	budget_dialog.custom_action.connect(_on_budget_action)
 	facility_dialog = AcceptDialog.new()
 	facility_dialog.title = "Facility Register"
 	add_child(facility_dialog)
@@ -471,8 +474,10 @@ func _on_category_selected(index: int) -> void:
 	_populate_build_menu(String(category_menu.get_item_metadata(index)))
 
 
-func _on_build_selected(_index: int) -> void:
+func _on_build_selected(index: int) -> void:
 	_update_footprint_label()
+	if map_view.active_tool == "facility":
+		map_view.set_facility_tool(String(build_menu.get_item_metadata(index)))
 
 
 func _on_place_tool() -> void:
@@ -548,18 +553,26 @@ func _on_day_advanced(summary: Dictionary) -> void:
 		completed.append(String(facility.name))
 	var operations: Dictionary = summary.get("operations", {})
 	var event: Dictionary = summary.get("event", {})
-	var important_lines := [
+	var important_lines: Array = [
 		"Day %d closed. Avalon is now beginning Day %d." % [int(summary.day), GameState.day],
 		"",
 		"Income                              %+8d cr" % int(summary.revenue),
 		"Facility upkeep                    -%8d cr" % int(summary.upkeep),
-		"Staff payroll                      -%8d cr" % int(summary.payroll),
+		"Staff payroll                      -%8d cr" % int(summary.payroll)
+	]
+	if int(summary.get("loan_payment", 0)) > 0:
+		important_lines.append("Loan repayment                     -%8d cr" % int(summary.loan_payment))
+	important_lines.append_array([
 		"TOTAL CHANGE                        %+8d cr" % int(summary.profit),
 		"Cash on hand                        %8d cr" % int(summary.funds),
 		"",
 		"Guests served: %d of %d demand" % [int(summary.served_guests), int(summary.guest_demand)],
 		"Guest satisfaction: %.0f%%" % (float(operations.get("satisfaction", 0.0)) * 100.0)
-	]
+	])
+	if int(summary.get("loan_balance", 0)) > 0:
+		important_lines.append("Loan remaining: %d cr" % int(summary.loan_balance))
+	elif int(summary.get("loan_payment", 0)) > 0:
+		important_lines.append("Loan repaid in full.")
 	if not completed.is_empty():
 		important_lines.append("Construction completed: %s" % ", ".join(completed))
 	if event.get("triggered", false):
@@ -573,6 +586,7 @@ func _on_day_advanced(summary: Dictionary) -> void:
 func _show_budget() -> void:
 	var operations := FacilityManager.calculate_daily_operations(GameState.guest_demand)
 	var payroll := StaffManager.calculate_daily_payroll()
+	var loan_payment := EconomyManager.get_projected_loan_payment()
 	var lines := [
 		"Projected operating budget for Day %d" % GameState.day,
 		"",
@@ -589,9 +603,29 @@ func _show_budget() -> void:
 	lines.append("Projected facility revenue:             %+d cr" % int(operations.get("revenue", 0)))
 	lines.append("Projected facility upkeep:              -%d cr" % int(operations.get("upkeep", 0)))
 	lines.append("Staff payroll:                           -%d cr" % payroll)
-	lines.append("PROJECTED NET:                           %+d cr" % (int(operations.get("revenue", 0)) - int(operations.get("upkeep", 0)) - payroll))
+	lines.append("Loan repayment:                          -%d cr" % loan_payment)
+	lines.append("PROJECTED NET:                           %+d cr" % (int(operations.get("revenue", 0)) - int(operations.get("upkeep", 0)) - payroll - loan_payment))
+	lines.append("")
+	if GameState.loan_balance > 0:
+		lines.append("OUTSTANDING LOAN: %d cr remaining at %d cr/day" % [GameState.loan_balance, GameState.loan_daily_payment])
+		loan_button.text = "Loan Active — %d cr Remaining" % GameState.loan_balance
+		loan_button.disabled = true
+	else:
+		lines.append("No outstanding loan.")
+		lines.append("Available loan: 10,000 cr now; repay 12,000 cr at 500 cr/day.")
+		loan_button.text = "Take 10,000 cr Loan"
+		loan_button.disabled = false
 	budget_dialog.dialog_text = "\n".join(lines)
 	budget_dialog.popup_centered(Vector2i(720, 520))
+
+
+func _on_budget_action(action: StringName) -> void:
+	if action != &"take_loan":
+		return
+	var result := EconomyManager.take_loan()
+	status_label.text = String(result.get("message", "Unable to take loan."))
+	_refresh()
+	call_deferred("_show_budget")
 
 
 func _show_staff() -> void:
