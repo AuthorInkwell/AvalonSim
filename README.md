@@ -40,6 +40,16 @@ Avalon: Paradise Engine is an early Godot 4 city-builder and management simulati
 
 Facilities remain in the existing authoritative simulation managers. The map stores their position, orientation, footprint, construction state, and road access; it does not replace the economic, staffing, reputation, or event systems.
 
+## Web build
+
+Godot 4.2 export templates are required to produce a browser build. With those installed, run:
+
+```bash
+scripts/export-web.sh
+```
+
+The build is written to `build/web/`. Serve that directory over HTTP or HTTPS rather than opening `index.html` directly. The export includes a small service worker that enables the cross-origin isolation required by Godot 4.2 on ordinary static hosts; the first visit reloads once while that worker activates.
+
 Saves are written to `user://avalon_save.json`, which keeps local playtest state out of the repository.
 
 ## Design Notes
