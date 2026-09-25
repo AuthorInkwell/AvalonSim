@@ -2,9 +2,12 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUTPUT_DIR="${1:-${PROJECT_ROOT}/build/web}"
+OUTPUT_DIR="${PROJECT_ROOT}/build/web"
 GODOT_BIN="${GODOT_BIN:-godot}"
 
+mkdir -p "${PROJECT_ROOT}/build"
+touch "${PROJECT_ROOT}/build/.gdignore"
+rm -rf "${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"
 
 "${GODOT_BIN}" \
