@@ -1,0 +1,62 @@
+name: Deploy Web Playtest
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Godot Web export
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Cache Godot and Web templates
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.local/bin/godot
+            ~/.local/share/godot/export_templates/4.2.stable
+          key: godot-4.2-stable-linux-web-v1
+
+      - name: Install Godot 4.2 and Web templates
+        run: |
+          scripts/install-godot.sh
+          scripts/install-godot-export-templates.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Export browser build
+        run: scripts/export-web.sh
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/web
+
+  deploy:
+    name: Publish browser playtest
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
